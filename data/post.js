@@ -1,5 +1,6 @@
 import db from "./db.js";
 
+db.pragma('forign_keys = ON');
 
 db.prepare(`
   CREATE TABLE IF NOT EXISTS posts (
