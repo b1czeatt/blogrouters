@@ -36,3 +36,7 @@ export function updateUser(id, user) {
 export function deleteUser(id) {
   return db.prepare("DELETE FROM users WHERE id = ?").run(id);
 }
+
+export const saveUser= (name,email,password)=>{
+  db.prepare("INSERT INTO users (name, email, password) VALUES (?, ?, ?)").run(name,email,password)
+}

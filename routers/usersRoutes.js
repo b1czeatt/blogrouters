@@ -26,10 +26,9 @@ userRoutes.post("/", async (req, res) => {
     res.status(400).json({ message: "Some data are missing!" });
   }
 
-  const salt = await bcrypt.genSalt();
+  const salt = await bcrypt.genSalt(12);
   const hashedPw = await bcrypt.hash(password, salt);
   const saved = User.saveUser(name, email, hashedPw);
-
   const user = User.getUserById(saved.lastInsertRowid);
 
   res.status(201).json(user);
