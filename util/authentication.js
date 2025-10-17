@@ -1,4 +1,5 @@
 import * as User from '../data/user.js'
+import jwt from "jsonwebtoken"
 function auth(req,res,next){
     try{
         const accessToken = req.headers.authorization
@@ -7,7 +8,7 @@ function auth(req,res,next){
         }
         const token = jwt.verify(accessToken.split(' ')[1],'secret_key')
         const now = Math.floor(Date.now()/1000)
-        if (!token || token?.exp < now) {
+        if (!token || token.exp || token.exp < now) {
             return res.status(403).json({message: 'Access forbidden'})
         }
         const user = User.getUserById(token.id)
