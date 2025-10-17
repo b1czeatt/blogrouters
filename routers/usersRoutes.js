@@ -1,6 +1,7 @@
 import express from "express";
 import * as User from "../data/user.js";
 import bcrypt from "bcrypt";
+import auth from "../util/authentication.js";
 
 const userRoutes = express.Router();
 
@@ -32,6 +33,30 @@ userRoutes.post("/", async (req, res) => {
   const user = User.getUserById(saved.lastInsertRowid);
 
   res.status(201).json(user);
+});
+
+userRoutes.patch("/:id", auth, (req, res) => {
+  const id = +req.params.id;
+  if (id != +req.userId){
+    return res.status(400).json({message: "Nincs!"})
+  }
+
+  const { name, email, password } = req.body;
+  let user = User.getUserById(id);
+  let hashedPw;
+
+  if (password) {
+      const salt = bcrypt.genSalt(12);
+      hashedPw = bcrypt.hash(password, salt);
+  }
+
+  User.updateUser(id, name || user.name, email || user.email, hashedPw ||user.password);
+  const saved = User.saveUser(name, email, hashedPw);
+  user = User.getUserById(saved.lastInsertRowid);
+
+  delete user.password;
+
+  res.status(200).json(user);
 });
 
 userRoutes.put("/:id", async (req, res) => {

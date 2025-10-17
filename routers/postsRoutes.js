@@ -1,5 +1,6 @@
 import express from "express";
 import * as Post from "../data/post.js";
+import auth from "../util/authentication.js";
 
 const postRoutes = express.Router();
 
