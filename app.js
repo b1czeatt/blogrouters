@@ -1,11 +1,13 @@
-import db from "./db.js"
+import db from "./db.js";
 
-db.prepare(`CREATE TABLE IF NOT EXISTS users(
+db.prepare(
+  `CREATE TABLE IF NOT EXISTS users(
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     name STRING,
     email STRING,
     password STRING 
-    )`).run();
+    )`
+).run();
 
 export const getUsers = () => db.prepare("SELECT * FROM users").all();
 export const getUserById = (id) =>
