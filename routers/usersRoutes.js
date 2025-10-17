@@ -1,45 +1,69 @@
-import express from "express";
-import * as User from "../data/user.js";
+import express from 'express'
+import * as User from '../data/user.js';
+import bcrypt from 'bcrypt'
 
-const router = express.Router();
+const userRoutes = express.Router();
 
-router.get("/", (req, res) => {
-  const users = User.getAllUsers();
+userRoutes.get("/", (req, res) => {
+  const users = User.getUsers();
   res.json(users);
 });
 
-router.get("/:id", (req, res) => {
-  const user = User.getUserById(req.params.id);
-  if (user) {
-    res.json(user);
-  } else {
-    res.status(404).json({ error: "User not found" });
-  }
-});
-
-router.post("/", (req, res) => {
-  const result = User.createUser(req.body);
-  res.status(201).json({ id: result.lastInsertRowid });
-});
-
-router.put("/:id", (req, res) => {
-  const user = User.getUserById(req.params.id);
-  if (!user) {
-    return res.status(404).json({ error: "User not found" });
+userRoutes.get("/:id", (req,res) => {
+  const id = req.params.id;
+  const user = User.getUserById(id);
+  if (!user){
+    res.status(400).json({message:"No such user!"})
   }
 
-  User.updateUser(req.params.id, req.body);
-  res.json({ message: "User updated" });
-});
+  res.status(200).json(user);
 
-router.delete("/:id", (req, res) => {
-  const user = User.getUserById(req.params.id);
-  if (!user) {
-    return res.status(404).json({ error: "User not found" });
+})
+
+userRoutes.post("/", async (req, res) => {
+  const {name, email, password} = req.body;
+
+  if (!name || !email || !password){
+    res.status(400).json({message:"Some data are missing!"});
   }
 
-  User.deleteUser(req.params.id);
-  res.json({ message: "User deleted" });
+  const salt = await bcrypt.genSalt();
+  const hashedPw = await bcrypt.hash(password, salt);
+  const saved = User.saveUser(name, email, hashedPw);
+
+  const user = User.getUserById(saved.lastInsertRowid);
+
+  res.status(201).json(user);
+
 });
 
-export default router;
+userRoutes.put("/:id", async (req, res) => {
+  const id = req.params.id;
+  const {name, email, password} = req.body;
+
+  const user = User.getUserById(id);
+  if (!user){
+    res.status(400).json({message:"No such user!"})
+  }
+
+  const salt = await bcrypt.genSalt();
+  const hashedPw = await bcrypt.hash(password, salt);
+  const saved = User.updateUser(name, email, hashedPw,id);
+
+  const updatedUser = User.getUserById(saved.lastInsertRowid);
+
+  res.status(201).json(updatedUser);
+
+});
+
+userRoutes.delete("/:id", (req, res) => {
+  const id = req.params.id;
+  const user = User.getUserById(id);
+  if (!user){
+    res.status(400).json({message:"No such user!"})
+  }
+  User.deleteUser(id);
+  res.status(200).json({message:"Deletion was successful!"})
+});
+
+export default userRoutes;

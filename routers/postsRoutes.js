@@ -1,45 +1,70 @@
-import express from "express";
-import * as Post from "../data/post.js";
+import express from 'express'
+import * as Post from '../data/post.js';
 
-const router = express.Router();
+const postRoutes = express.Router();
 
-router.get("/", (req, res) => {
-  const posts = Post.getAllPosts();
+
+postRoutes.get("/", (req, res) => {
+  const posts = Post.getPosts();
   res.json(posts);
 });
 
-router.get("/:id", (req, res) => {
-  const post = Post.getPostById(req.params.id);
-  if (post) {
-    res.json(post);
-  } else {
-    res.status(404).json({ error: "Post not found" });
-  }
-});
-
-router.post("/", (req, res) => {
-  const result = Post.createPost(req.body);
-  res.status(201).json({ id: result.lastInsertRowid });
-});
-
-router.put("/:id", (req, res) => {
-  const post = Post.getPostById(req.params.id);
-  if (!post) {
-    return res.status(404).json({ error: "Post not found" });
+postRoutes.get("/:id", (req,res) => {
+  const id = req.params.id;
+  const post = post.getPostById(id);
+  if (!post){
+    res.status(400).json({message:"No such post!"})
   }
 
-  Post.updatePost(req.params.id, req.body);
-  res.json({ message: "Post updated" });
-});
+  res.status(200).json(post);
 
-router.delete("/:id", (req, res) => {
-  const post = Post.getPostById(req.params.id);
-  if (!post) {
-    return res.status(404).json({ error: "Post not found" });
+})
+
+postRoutes.post("/", async (req, res) => {
+  const {name, email, password} = req.body;
+
+  if (!name || !email || !password){
+    res.status(400).json({message:"Some data are missing!"});
   }
 
-  Post.deletePost(req.params.id);
-  res.json({ message: "Post deleted" });
+  const salt = await bcrypt.genSalt();
+  const hashedPw = await bcrypt.hash(password, salt);
+  const saved = post.savePost(name, email, hashedPw);
+
+  const post = post.getPostById(saved.lastInsertRowid);
+
+  res.status(201).json(post);
+
 });
 
-export default router;
+postRoutes.put("/:id", async (req, res) => {
+  const id = req.params.id;
+  const {name, email, password} = req.body;
+
+  const post = post.getPostById(id);
+  if (!post){
+    res.status(400).json({message:"No such post!"})
+  }
+
+  const salt = await bcrypt.genSalt();
+  const hashedPw = await bcrypt.hash(password, salt);
+  const saved = post.updatePost(name, email, hashedPw,id);
+
+  const updatedpost = post.getPostById(saved.lastInsertRowid);
+
+  res.status(201).json(updatedpost);
+
+});
+
+postRoutes.delete("/:id", (req, res) => {
+  const id = req.params.id;
+  const post = post.getPostById(id);
+  if (!post){
+    res.status(400).json({message:"No such post!"})
+  }
+  post.deletePost(id);
+  res.status(200).json({message:"Deletion was successful!"})
+});
+
+
+export default postRoutes;

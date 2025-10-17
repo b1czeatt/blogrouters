@@ -1,17 +1,24 @@
-import express from "express";
-import cors from "cors";
-import postRoutes from "./routers/postsRoutes.js";
-import usersRoutes from "./routers/usersRoutes.js";
+import db from "./db.js"
 
-const PORT = 3000;
-const app = express();
+db.prepare(`CREATE TABLE IF NOT EXISTS users(
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name STRING,
+    email STRING,
+    password STRING 
+    )`).run();
 
-app.use(express.json());
-app.use(cors());
-
-app.use("/posts", postRoutes);
-app.use("/users", usersRoutes);
-
-app.listen(PORT, () => {
-  console.log(`A szerver a ${PORT}-es porton fut!`);
-});
+export const getUsers = () => db.prepare("SELECT * FROM users").all();
+export const getUserById = (id) =>
+  db.prepare(`SELECT * FROM users WHERE id = ?`).get(id);
+export const saveUser = (name, email, password) =>
+  db
+    .prepare(`INSERT INTO users (name, email, password) VALUES (?,?,?)`)
+    .run(name, email, password);
+export const updateUser = (name, email, password, id) =>
+  db
+    .prepare(`UPDATE users SET name=?, email=?, password=? WHERE id = ?`)
+    .run(name, email, password, id);
+export const deleteUser = (id) =>
+  db.prepare(`DELETE FROM users WHERE id = ?`).run(id);
+export const getUserByEmail = (email) =>
+  db.prepare(`SELECT * FROM users WHERE email = ?`).get(email);
